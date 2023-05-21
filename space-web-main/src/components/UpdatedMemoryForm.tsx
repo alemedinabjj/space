@@ -1,17 +1,26 @@
 'use client'
 
-import { Camera } from 'lucide-react'
-import { MediaPicker } from './MediaPicker'
-import { FormEvent } from 'react'
 import { api } from '@/lib/api'
-import Cookie from 'js-cookie'
+import { FormEvent, useState } from 'react'
+import Cookies from 'js-cookie'
 import { useRouter } from 'next/navigation'
+import { MediaPicker } from './MediaPicker'
+import { Camera } from 'lucide-react'
 
-export function NewMemoryForm() {
+interface UpdatedMemoryFormProps {
+  id: string
+}
+
+export function UpdatedMemoryForm({ id }: UpdatedMemoryFormProps) {
   const router = useRouter()
+  const [edit, setEdit] = useState(false)
+  const [loading, setLoading] = useState(false)
 
-  async function handleCreateMemory(event: FormEvent<HTMLFormElement>) {
+  const token = Cookies.get('token')
+
+  async function handleEditMemory(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    setLoading(true)
 
     const formData = new FormData(event.currentTarget)
 
@@ -28,10 +37,8 @@ export function NewMemoryForm() {
       coverUrl = uploadResponse.data.fileUrl
     }
 
-    const token = Cookie.get('token')
-
-    await api.post(
-      '/memories',
+    await api.put(
+      `/memories/${id}`,
       {
         coverUrl,
         content: formData.get('content'),
@@ -44,14 +51,12 @@ export function NewMemoryForm() {
       },
     )
 
+    setLoading(false)
     router.push('/')
   }
 
-  return (
-    <form
-      onSubmit={handleCreateMemory}
-      className=" flex flex-1 flex-col gap-2 p-16"
-    >
+  return edit ? (
+    <form onSubmit={handleEditMemory} className=" flex flex-1 flex-col gap-2 ">
       <div className="flex items-center gap-4">
         <label
           htmlFor="media"
@@ -88,8 +93,17 @@ export function NewMemoryForm() {
         type="submit"
         className=" inline-block self-end rounded-full bg-green-500 px-5 py-3 font-alt text-sm uppercase leading-none text-black hover:bg-green-600"
       >
-        Salvar
+        {!loading ? 'Salvar' : 'Salvando...'}
       </button>
     </form>
+  ) : (
+    <div className="flex justify-end">
+      <button
+        onClick={() => setEdit(true)}
+        className="inline-block self-end  rounded-full bg-green-500 px-5 py-3 font-alt text-sm uppercase leading-none text-black hover:bg-green-600"
+      >
+        Editar
+      </button>
+    </div>
   )
 }

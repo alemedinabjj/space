@@ -126,12 +126,17 @@ export async function memoriesRoutes(app: FastifyInstance) {
       reply.status(401).send({
         error: 'Unauthorized',
       })
+      return
     }
 
-    await prisma.memory.findUniqueOrThrow({
+    await prisma.memory.delete({
       where: {
         id,
       },
+    })
+
+    reply.status(200).send({
+      message: 'Memory deleted successfully',
     })
   })
 }
